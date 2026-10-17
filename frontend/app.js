@@ -411,10 +411,10 @@ function renderOverview() {
   const evidenceCount = state.incident ? state.evidence.length : 0;
   const reviewCount = state.incident && !state.approvals.length ? 1 : 0;
   overviewStats.innerHTML = `
-    <div class="overview-stat"><span class="overview-stat-icon">◉</span><div><strong>${state.incidents.length}</strong><span>Tracked incidents</span></div></div>
-    <div class="overview-stat"><span class="overview-stat-icon is-green">E</span><div><strong>${evidenceCount}</strong><span>Evidence in focus</span></div></div>
-    <div class="overview-stat"><span class="overview-stat-icon is-amber">!</span><div><strong>${reviewCount}</strong><span>Awaiting review</span></div></div>
-    <div class="overview-stat"><span class="overview-stat-icon is-blue">✓</span><div><strong>${verified}</strong><span>Verified in focus</span></div></div>`;
+    <div class="overview-stat is-incidents"><span class="overview-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg></span><div><strong>${state.incidents.length}</strong><span>Tracked incidents</span></div></div>
+    <div class="overview-stat is-evidence"><span class="overview-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h3m-3 4h4m1-5 2 2 3-3"/></svg></span><div><strong>${evidenceCount}</strong><span>Evidence in focus</span></div></div>
+    <div class="overview-stat is-review"><span class="overview-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="5"/><path d="M1 21a8 8 0 0 1 14.8-4.2M16 19l2 2 4-4"/></svg></span><div><strong>${reviewCount}</strong><span>Awaiting review</span></div></div>
+    <div class="overview-stat is-verified"><span class="overview-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></span><div><strong>${verified}</strong><span>Verified in focus</span></div></div>`;
 }
 
 function renderRecentIncidents() {
