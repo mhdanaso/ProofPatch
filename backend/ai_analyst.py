@@ -52,6 +52,90 @@ def rules_analysis(incident: dict, note: str = "") -> dict:
     }
 
 
+def _parse_json_object(content: object) -> dict:
+    """Parse a JSON object from plain text or a model's fenced/prose-wrapped reply."""
+    if isinstance(content, list):
+        content = "".join(
+            part.get("text", "") for part in content if isinstance(part, dict)
+        )
+    if not isinstance(content, str):
+        raise ValueError("The AI response content was not text.")
+
+    text = content.strip()
+    if len(text) >= 2 and text[0] == "'" and text[-1] == "'":
+        text = text[1:-1].strip()
+    # Some free models incorrectly escape apostrophes inside JSON strings.
+    text = text.replace("\\'", "'")
+    if text.startswith("```"):
+        first_line, separator, remainder = text.partition("\n")
+        if separator:
+            text = remainder.rsplit("```", 1)[0].strip()
+
+    decoder = json.JSONDecoder()
+    candidates = []
+    offset = 0
+    while (start := text.find("{", offset)) != -1:
+        try:
+            value, end = decoder.raw_decode(text, start)
+        except json.JSONDecodeError:
+            offset = start + 1
+            continue
+        if isinstance(value, dict):
+            candidates.append(value)
+        offset = end
+
+    if not candidates:
+        raise ValueError("The AI response did not contain a JSON object.")
+    # The final object is normally the answer when a model adds prose or an example.
+    return candidates[-1]
+
+
+def _string_list(value: object, field: str) -> list[str]:
+    """Normalize model output fields that may be a string or an array of strings."""
+    if isinstance(value, str):
+        return [value.strip()] if value.strip() else []
+    if not isinstance(value, list):
+        raise ValueError(f"The AI response field {field} was not text or a list.")
+    return [str(item).strip() for item in value if str(item).strip()]
+
+
+def _ai_result(result: dict, allowed_ids: set[str]) -> dict:
+    """Validate and normalize one provider response before using its analysis."""
+    choices = result.get("choices")
+    if not isinstance(choices, list) or not choices:
+        raise ValueError("The AI response had no completion choices.")
+    message = choices[0].get("message") if isinstance(choices[0], dict) else None
+    if not isinstance(message, dict):
+        raise ValueError("The AI response had no message content.")
+    parsed = _parse_json_object(message.get("content"))
+    refs = parsed.get("supporting_evidence_ids", [])
+    confidence = parsed.get("confidence")
+    required_text = ("summary", "likely_cause", "recommended_fix")
+    if (
+        not all(isinstance(parsed.get(key), str) and parsed[key].strip() for key in required_text)
+        or not isinstance(confidence, (float, int))
+        or not 0 <= confidence <= 1
+        or not isinstance(refs, list)
+        or not refs
+        or not set(refs).issubset(allowed_ids)
+    ):
+        raise ValueError("The AI response did not match the required fields or valid evidence IDs.")
+    verification_plan = _string_list(parsed.get("verification_plan", []), "verification_plan")
+    unknowns = _string_list(parsed.get("unknowns", []), "unknowns")
+    return {
+        "provider": "ai",
+        "model": result.get("model") or MODEL,
+        "summary": parsed["summary"].strip(),
+        "likely_cause": parsed["likely_cause"].strip(),
+        "confidence": round(float(confidence), 2),
+        "supporting_evidence_ids": refs,
+        "recommended_fix": parsed["recommended_fix"].strip(),
+        "verification_plan": verification_plan[:4],
+        "unknowns": unknowns[:4],
+        "note": "AI-generated analysis; evidence references were checked by the backend.",
+    }
+
+
 def analyze(incident: dict) -> dict:
     if not API_KEY:
         return rules_analysis(incident)
@@ -79,49 +163,38 @@ def analyze(incident: dict) -> dict:
             {"role": "user", "content": user_prompt},
         ],
     }).encode("utf-8")
-    request = Request(
-        API_URL,
-        data=payload,
-        headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
-        method="POST",
-    )
+    attempts = 2 if MODEL == "openrouter/free" else 1
+    last_error = "The AI response could not be used."
+    for attempt in range(attempts):
+        request = Request(
+            API_URL,
+            data=payload,
+            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=25) as response:
+                result = json.loads(response.read().decode("utf-8"))
+            return _ai_result(result, allowed_ids)
+        except HTTPError as exc:
+            if exc.code in {401, 403}:
+                reason = "Check the AI_API_KEY in backend/.env; the provider rejected it."
+            elif exc.code == 402:
+                reason = "Check the provider account's credits or model access."
+            elif exc.code == 404:
+                reason = "Check the AI_API_URL and AI_MODEL values."
+            elif exc.code == 429:
+                reason = "The provider rate limit was reached; retry after it resets."
+            elif exc.code == 400:
+                reason = "Check that the selected model supports JSON responses."
+            else:
+                reason = "Check the AI provider settings and service status."
+            return rules_analysis(incident, f"AI provider returned HTTP {exc.code}. {reason} Showing evidence-based guidance instead.")
+        except URLError:
+            return rules_analysis(incident, "Could not reach the AI provider. Check the network and AI_API_URL. Showing evidence-based guidance instead.")
+        except (TimeoutError, KeyError, IndexError, TypeError, ValueError) as exc:
+            last_error = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+            if attempt + 1 < attempts:
+                continue
 
-    try:
-        with urlopen(request, timeout=25) as response:
-            result = json.loads(response.read().decode("utf-8"))
-        content = result["choices"][0]["message"]["content"]
-        if isinstance(content, list):
-            content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
-        parsed = json.loads(content)
-        if not isinstance(parsed, dict):
-            raise ValueError("The AI response was not a JSON object.")
-        refs = parsed.get("supporting_evidence_ids", [])
-        confidence = parsed.get("confidence")
-        required_text = ("summary", "likely_cause", "recommended_fix")
-        if (
-            not all(isinstance(parsed.get(key), str) and parsed[key].strip() for key in required_text)
-            or not isinstance(confidence, (float, int))
-            or not 0 <= confidence <= 1
-            or not isinstance(refs, list)
-            or not refs
-            or not set(refs).issubset(allowed_ids)
-        ):
-            raise ValueError("The AI response did not match the expected evidence-backed format.")
-        verification_plan = parsed.get("verification_plan", [])
-        unknowns = parsed.get("unknowns", [])
-        if not isinstance(verification_plan, list) or not isinstance(unknowns, list):
-            raise ValueError("The AI response included invalid plan or unknown fields.")
-        return {
-            "provider": "ai",
-            "model": MODEL,
-            "summary": parsed["summary"].strip(),
-            "likely_cause": parsed["likely_cause"].strip(),
-            "confidence": round(float(confidence), 2),
-            "supporting_evidence_ids": refs,
-            "recommended_fix": parsed["recommended_fix"].strip(),
-            "verification_plan": [str(item) for item in verification_plan[:4]],
-            "unknowns": [str(item) for item in unknowns[:4]],
-            "note": "AI-generated analysis; evidence references were checked by the backend.",
-        }
-    except (HTTPError, URLError, TimeoutError, KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        return rules_analysis(incident, f"AI request unavailable or invalid ({type(exc).__name__}); using deterministic fallback.")
+    return rules_analysis(incident, f"AI response could not be used ({last_error}); showing evidence-based guidance instead.")

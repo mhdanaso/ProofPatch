@@ -282,6 +282,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ai-enrichment { min-width: 0; padding: 15px; border: 1px solid #dce9df; border-radius: 12px; background: #f4faf5; overflow-wrap: anywhere; }
 .ai-enrichment-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; color: #77847b; font-size: 11px; }
 .ai-badge { color: #287849; font-weight: 750; }
+.ai-fallback-note { margin: 10px 0 0; padding: 9px 10px; border: 1px solid #eee2bf; border-radius: 9px; background: #fffaf0; color: #746337; font-size: 11px; line-height: 1.5; }
 .ai-enrichment h4 { margin: 0 0 8px; color: #26382c; font-size: 15px; line-height: 1.45; }
 .ai-enrichment > p { margin: 0; color: #59675e; font-size: 13px; line-height: 1.5; }
 .ai-fix { margin-top: 12px; padding: 11px 12px; border: 1px solid #e0eae2; border-radius: 10px; background: rgba(255,255,255,.8); }
