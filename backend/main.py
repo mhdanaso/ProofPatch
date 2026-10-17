@@ -11,10 +11,14 @@ from pydantic import BaseModel
 from ai_analyst import analyze
 from routes.analysis import router as analysis_router
 from routes.approvals import router as approvals_router
+from routes.analytics import router as analytics_router
 from routes.evidence import router as evidence_router
+from routes.github import router as github_router
+from routes.github_webhooks import router as github_webhooks_router
 from routes.incidents import router as incidents_router
 from routes.reports import router as reports_router
 from routes.verification import router as verification_router
+from routes.webhooks import router as webhooks_router
 
 DEMO_APP_URL = "http://127.0.0.1:8080"
 
@@ -26,11 +30,15 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 app.include_router(incidents_router)
+app.include_router(analytics_router)
 app.include_router(evidence_router)
+app.include_router(github_router)
+app.include_router(github_webhooks_router)
 app.include_router(analysis_router)
 app.include_router(verification_router)
 app.include_router(approvals_router)
 app.include_router(reports_router)
+app.include_router(webhooks_router)
 
 
 class ApprovalRequest(BaseModel):

@@ -1,13 +1,13 @@
 """Evidence collection and retrieval for ProofPatch incidents."""
 
 from datetime import datetime, timezone
-from threading import Lock
 from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
+from database import append_workflow_record, list_workflow_records
 from routes.incidents import incident_exists
 
 router = APIRouter(prefix="/api/incidents/{incident_id}/evidence", tags=["evidence"])
@@ -25,10 +25,6 @@ class EvidenceRecord(EvidenceInput):
     collected_at: datetime
 
 
-_evidence_by_incident: dict[UUID, list[EvidenceRecord]] = {}
-_evidence_lock = Lock()
-
-
 def _require_incident(incident_id: UUID) -> None:
     if not incident_exists(incident_id):
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -41,14 +37,12 @@ def _record_evidence(incident_id: UUID, item: EvidenceInput) -> EvidenceRecord:
         incident_id=incident_id,
         collected_at=datetime.now(timezone.utc),
     )
-    with _evidence_lock:
-        _evidence_by_incident.setdefault(incident_id, []).append(record)
+    append_workflow_record("evidence", incident_id, record.model_dump(mode="json"), record.collected_at.isoformat())
     return record
 
 
 def evidence_for_incident(incident_id: UUID) -> list[EvidenceRecord]:
-    with _evidence_lock:
-        return list(_evidence_by_incident.get(incident_id, []))
+    return [EvidenceRecord.model_validate(item) for item in list_workflow_records("evidence", incident_id)]
 
 
 @router.post("", response_model=EvidenceRecord, status_code=status.HTTP_201_CREATED)

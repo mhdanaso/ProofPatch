@@ -2,7 +2,6 @@
 
 import re
 from datetime import datetime, timezone
-from threading import Lock
 from typing import Literal
 from uuid import UUID
 
@@ -10,12 +9,11 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from ai_analyst import analyze as analyze_with_ai
+from database import get_analysis, save_analysis
 from routes.evidence import EvidenceRecord, evidence_for_incident
 from routes.incidents import IncidentRecord, get_incident
 
 router = APIRouter(prefix="/api/incidents", tags=["triage and analysis"])
-_latest_analysis: dict[UUID, "IncidentAnalysis"] = {}
-_analysis_lock = Lock()
 
 
 class RootCauseFinding(BaseModel):
@@ -167,11 +165,10 @@ def analyze_incident(incident_id: UUID) -> IncidentAnalysis:
             unknowns=[f"AI enrichment unavailable ({type(exc).__name__}); deterministic analysis retained."],
             note="Deterministic evidence analysis is active; external AI enrichment was unavailable.",
         )
-    with _analysis_lock:
-        _latest_analysis[incident_id] = result
+    save_analysis(str(incident_id), result.analyzed_at.isoformat(), result.model_dump(mode="json"))
     return result
 
 
 def latest_analysis_for_incident(incident_id: UUID) -> IncidentAnalysis | None:
-    with _analysis_lock:
-        return _latest_analysis.get(incident_id)
+    record = get_analysis(incident_id)
+    return IncidentAnalysis.model_validate(record) if record else None

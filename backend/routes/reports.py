@@ -1,4 +1,4 @@
-"""Unified incident report assembled from in-memory workflow records."""
+"""Unified incident report assembled from persisted workflow records."""
 
 from datetime import datetime, timezone
 from uuid import UUID
@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from database import list_workflow_records
 from routes.analysis import IncidentAnalysis, latest_analysis_for_incident
 from routes.approvals import ApprovalRecord, approval_records_for_incident
 from routes.evidence import EvidenceRecord, evidence_for_incident
@@ -32,6 +33,18 @@ class IncidentReport(BaseModel):
     timeline: list[TimelineEvent]
 
 
+def _evidence_time(item: EvidenceRecord) -> datetime:
+    """Use the source event's timestamp for GitHub changes in the timeline."""
+    value = item.details.get("occurred_at")
+    if isinstance(value, str):
+        try:
+            occurred_at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return occurred_at.replace(tzinfo=timezone.utc) if occurred_at.tzinfo is None else occurred_at
+        except ValueError:
+            pass
+    return item.collected_at
+
+
 @router.get("/{incident_id}/report", response_model=IncidentReport)
 def get_incident_report(incident_id: UUID) -> IncidentReport:
     incident = get_incident(incident_id)
@@ -49,8 +62,8 @@ def get_incident_report(incident_id: UUID) -> IncidentReport:
     ]
     events.extend(
         TimelineEvent(
-            occurred_at=item.collected_at,
-            kind="evidence_collected",
+            occurred_at=_evidence_time(item),
+            kind="github_change_recorded" if item.source.casefold().startswith("github ") else "evidence_collected",
             summary=f"{item.source}: {item.observation}",
             reference_id=item.id,
         )
@@ -85,6 +98,15 @@ def get_incident_report(incident_id: UUID) -> IncidentReport:
             reference_id=item.id,
         )
         for item in verifications
+    )
+    events.extend(
+        TimelineEvent(
+            occurred_at=item["occurred_at"],
+            kind="incident_status_changed",
+            summary=f"Incident status changed from {item['from_status']} to {item['to_status']} by {item.get('changed_by', 'Workspace user')}.",
+            reference_id=item["id"],
+        )
+        for item in list_workflow_records("status", incident_id)
     )
     events.sort(key=lambda event: event.occurred_at)
     return IncidentReport(

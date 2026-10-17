@@ -1,13 +1,13 @@
 """Deterministic sandbox checks for proposed checkout configuration fixes."""
 
 from datetime import datetime, timezone
-from threading import Lock
 from typing import Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
+from database import append_workflow_record, list_workflow_records, parse_datetime
 from routes.approvals import approval_records_for_incident
 from routes.incidents import get_incident, incident_exists
 
@@ -45,13 +45,23 @@ class VerificationRecord(BaseModel):
     summary: str
 
 
-_verification_by_incident: dict[UUID, list[VerificationRecord]] = {}
-_verification_lock = Lock()
-
-
 def verification_records_for_incident(incident_id: UUID) -> list[VerificationRecord]:
-    with _verification_lock:
-        return list(_verification_by_incident.get(incident_id, []))
+    return [VerificationRecord.model_validate(item) for item in list_workflow_records("verification", incident_id)]
+
+
+def _require_current_approval(incident_id: UUID) -> None:
+    approvals = approval_records_for_incident(incident_id)
+    if not approvals or approvals[-1].decision != "approved":
+        raise HTTPException(status_code=409, detail="Record an approved human review before running a check.")
+    investigation = next(
+        (item for item in reversed(list_workflow_records("status", incident_id)) if item.get("to_status") == "investigating"),
+        None,
+    )
+    if investigation and approvals[-1].recorded_at <= parse_datetime(investigation["occurred_at"]):
+        raise HTTPException(
+            status_code=409,
+            detail="Record a fresh human review after starting or reopening the investigation.",
+        )
 
 
 @router.post("/verify", response_model=VerificationRecord, status_code=status.HTTP_201_CREATED)
@@ -62,12 +72,7 @@ def verify_proposed_fix(incident_id: UUID, payload: VerificationRequest) -> Veri
             status_code=status.HTTP_409_CONFLICT,
             detail="Automated verification is currently available for the seeded checkout demo only.",
         )
-    approvals = approval_records_for_incident(incident_id)
-    if not approvals or approvals[-1].decision != "approved":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Record an approved human review before running verification.",
-        )
+    _require_current_approval(incident_id)
 
     allowed_names = {"PAYMENT_TIMEOUT", "PAYMENT_TIMEOUT_MS"}
     configured_names = set(payload.configured_setting_names)
@@ -111,8 +116,7 @@ def verify_proposed_fix(incident_id: UUID, payload: VerificationRequest) -> Veri
             else "One or more deterministic sandbox checks failed."
         ),
     )
-    with _verification_lock:
-        _verification_by_incident.setdefault(incident_id, []).append(record)
+    append_workflow_record("verification", incident_id, record.model_dump(mode="json"), record.checked_at.isoformat())
     return record
 
 
@@ -124,12 +128,7 @@ def record_manual_service_check(incident_id: UUID, payload: ManualServiceCheckRe
             status_code=status.HTTP_409_CONFLICT,
             detail="Use the automated sandbox checks for the seeded checkout demo.",
         )
-    approvals = approval_records_for_incident(incident_id)
-    if not approvals or approvals[-1].decision != "approved":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Record an approved human review before recording a service check.",
-        )
+    _require_current_approval(incident_id)
 
     check_name = payload.check_name.strip()
     note = payload.note.strip()
@@ -147,8 +146,7 @@ def record_manual_service_check(incident_id: UUID, payload: ManualServiceCheckRe
         checks=[],
         summary=f"Manually recorded check {outcome_label}: {check_name}" + (f" — {note}" if note else "."),
     )
-    with _verification_lock:
-        _verification_by_incident.setdefault(incident_id, []).append(record)
+    append_workflow_record("verification", incident_id, record.model_dump(mode="json"), record.checked_at.isoformat())
     return record
 
 

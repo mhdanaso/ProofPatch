@@ -3,47 +3,133 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f5f5f7" />
-    <meta name="description" content="PatchProof brings incident evidence, diagnosis, and safe verification into one clear workspace." />
-    <title>PatchProof — Incident workspace</title>
+    <meta name="theme-color" content="#eef4f1" />
+    <meta name="description" content="ProofPatch brings incident evidence, analysis, human review, and verification into one clear workspace." />
+    <title>ProofPatch | Incident response workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
     <div class="app-shell">
       <header class="site-header" id="top">
-        <a class="brand" href="#top" aria-label="PatchProof home"><span class="brand-icon">P</span><span>PatchProof<span class="brand-dot">.</span></span></a>
+        <a class="brand" href="#top" aria-label="ProofPatch home">
+          <span class="brand-icon" aria-hidden="true"><span>P</span></span>
+          <span class="brand-name">ProofPatch<span class="brand-dot">.</span><small>INCIDENT WORKSPACE</small></span>
+        </a>
         <nav class="site-nav" aria-label="Main navigation">
-          <a class="nav-link active" href="#incident"><span class="nav-icon">▦</span>Incident room</a>
-          <a class="nav-link" href="#evidence"><span class="nav-icon">⌕</span>Evidence</a>
-          <a class="nav-link" href="#report"><span class="nav-icon">▤</span>Incident report</a>
+          <a class="nav-link active" href="#overview"><span class="nav-icon" aria-hidden="true">⌂</span>Workspace</a>
+          <a class="nav-link" href="#recent-incidents"><span class="nav-icon" aria-hidden="true">▤</span>Incidents</a>
+          <a class="nav-link" href="#recent-changes"><span class="nav-icon" aria-hidden="true">↗</span>Changes</a>
+          <a class="nav-link" href="#analytics"><span class="nav-icon" aria-hidden="true">◫</span>Analytics</a>
+          <a class="nav-link" href="#how-it-works"><span class="nav-icon" aria-hidden="true">↗</span>Workflow</a>
         </nav>
-        <button class="icon-button" id="refresh-button" aria-label="Refresh incident" title="Refresh">↻</button>
+        <button class="icon-button" id="refresh-button" type="button" aria-label="Refresh current incident" title="Refresh workspace">
+          <span aria-hidden="true">↻</span>
+        </button>
       </header>
 
       <main class="main-area">
         <div class="content">
-          <section class="page-heading"><div><h1>Investigate incidents with evidence.</h1><p>Understand the cause, review a proposed fix, and keep people in control.</p></div><div class="page-heading-actions"><button class="button button-secondary" id="toggle-report-form" type="button">＋ Report a problem</button><button class="button button-primary" id="new-incident" type="button"><span>＋</span> Start demo incident</button></div></section>
+          <section class="page-heading" id="overview">
+            <div class="page-heading-copy">
+              <span class="eyebrow page-eyebrow"><span class="eyebrow-mark" aria-hidden="true">✳</span> EVIDENCE FIRST · HUMAN REVIEW</span>
+              <h1>Make incident response easier to review.</h1>
+              <p>Bring signals together, understand what they support, and keep every decision with a person.</p>
+            </div>
+            <div class="page-heading-actions">
+              <button class="button button-secondary" id="toggle-report-form" type="button"><span aria-hidden="true">＋</span> Report an incident</button>
+              <button class="button button-primary" id="new-incident" type="button"><span aria-hidden="true">▶</span> Load demo incident</button>
+            </div>
+          </section>
 
-          <section class="welcome-banner" id="welcome-banner"><div class="welcome-copy"><h2>From first alert to verified recovery.</h2><p>Start the seeded checkout incident to see how evidence leads to a diagnosis, a reviewed fix, and deterministic checks.</p><button class="button button-light" id="banner-start">Start the walkthrough <span>→</span></button></div><div class="banner-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="art-core">✳</div><div class="art-chip chip-one">HEALTH CHECK <b>500</b></div><div class="art-chip chip-two">CONFIG <b>Mismatch</b></div><div class="art-chip chip-three">APPROVAL <b>Required</b></div></div></section>
+          <section class="overview-strip glass-panel" aria-label="Workspace overview">
+            <div class="overview-intro">
+              <span class="eyebrow">WORKSPACE SNAPSHOT</span>
+              <h2>Keep the response traceable.</h2>
+              <p>Current activity across incidents, evidence, review, and checks.</p>
+            </div>
+            <div class="overview-stats" id="overview-stats" aria-live="polite"></div>
+          </section>
+
+          <section class="welcome-banner glass-panel" id="welcome-banner">
+            <div class="welcome-copy">
+              <span class="banner-kicker">A CLEARER PATH THROUGH THE INCIDENT</span>
+              <h2>From first signal to reviewed next step.</h2>
+              <p>Explore a repeatable checkout failure and see how each finding connects back to evidence.</p>
+              <button class="button button-light" id="banner-start" type="button">Walk through the demo <span aria-hidden="true">→</span></button>
+            </div>
+            <div class="banner-art" aria-hidden="true">
+              <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+              <div class="art-core"><span>PP</span><small>PROOFPATCH</small></div>
+              <div class="art-chip chip-one"><i></i> HEALTH CHECK <b>500</b></div>
+              <div class="art-chip chip-two"><i></i> CONFIG <b>Mismatch</b></div>
+              <div class="art-chip chip-three"><i></i> HUMAN REVIEW <b>Required</b></div>
+            </div>
+          </section>
 
           <section class="surface report-problem-panel hidden" id="report-problem-panel" aria-labelledby="report-problem-title">
-            <div class="surface-heading"><div><h2 id="report-problem-title">Report an incident</h2><p>Describe what’s going wrong. ProofPatch will save it, analyze the details, and suggest next steps.</p></div></div>
+            <div class="surface-heading">
+              <div><span class="eyebrow">NEW WORK ITEM</span><h2 id="report-problem-title">Report an incident</h2><p>Share what happened and the evidence you already have.</p></div>
+              <span class="surface-mark" aria-hidden="true">＋</span>
+            </div>
             <form id="report-problem-form">
               <div class="problem-form-grid">
-                <div class="field"><label for="problem-title">Problem title</label><input id="problem-title" name="title" maxlength="160" placeholder="Checkout returns errors" required /></div>
+                <div class="field"><label for="problem-title">Incident title</label><input id="problem-title" name="title" maxlength="160" placeholder="Checkout requests are failing" required /></div>
                 <div class="field"><label for="problem-service">Affected service</label><input id="problem-service" name="service" maxlength="100" placeholder="checkout-api" required /></div>
                 <div class="field"><label for="problem-severity">Severity</label><select id="problem-severity" name="severity"><option value="medium">Medium</option><option value="low">Low</option><option value="high">High</option><option value="critical">Critical</option></select></div>
                 <div class="field problem-description"><label for="problem-description">What happened?</label><textarea id="problem-description" name="description" maxlength="2000" rows="3" placeholder="Describe the error, when it started, and any recent changes you know about." required></textarea></div>
-                <div class="field problem-symptoms"><label for="problem-symptoms">Symptoms or clues <span>(one per line, optional)</span></label><textarea id="problem-symptoms" name="symptoms" rows="3" placeholder="HTTP 500 responses&#10;Health check is failing"></textarea></div>
+                <div class="field problem-symptoms"><label for="problem-symptoms">Symptoms or clues <span>Optional · one per line</span></label><textarea id="problem-symptoms" name="symptoms" rows="3" placeholder="HTTP 500 responses&#10;Health check is failing"></textarea></div>
               </div>
-              <p class="problem-helper">Analysis uses the information you provide and the configured AI service when available. Recommendations are suggestions; nothing is changed automatically.</p>
-              <div class="problem-form-actions"><button class="button button-secondary" type="button" id="cancel-report-form">Cancel</button><button class="button button-primary" type="submit" id="submit-problem">Save and analyze</button></div>
+              <p class="problem-helper"><span aria-hidden="true">ⓘ</span> Recommendations are suggestions. ProofPatch never applies changes automatically.</p>
+              <div class="problem-form-actions"><button class="button button-secondary" type="button" id="cancel-report-form">Cancel</button><button class="button button-primary" type="submit" id="submit-problem">Save and analyze <span aria-hidden="true">→</span></button></div>
             </form>
           </section>
 
+          <section class="surface recent-incidents-panel" id="recent-incidents" aria-labelledby="recent-incidents-title">
+            <div class="surface-heading recent-incidents-heading">
+              <div><span class="eyebrow">YOUR WORKSPACE</span><h2 id="recent-incidents-title">Incident queue</h2><p>Search, filter, and reopen recent incidents.</p></div>
+              <div class="incident-list-controls">
+                <label class="search-control"><span aria-hidden="true">⌕</span><input id="incident-search" type="search" placeholder="Search incidents" aria-label="Search incidents" /></label>
+                <select id="incident-severity" aria-label="Filter incidents by severity"><option value="all">All severity</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+                <select id="incident-status-filter" aria-label="Filter incidents by status"><option value="all">All statuses</option><option value="open">Open</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select>
+                <button class="button button-quiet" id="refresh-incidents" type="button">Refresh list</button>
+              </div>
+            </div>
+            <div id="recent-incidents-list" aria-live="polite"></div>
+          </section>
+
+          <section class="surface analytics-panel" id="analytics" aria-labelledby="analytics-title">
+            <div class="surface-heading analytics-heading">
+              <div><span class="eyebrow">OPERATIONAL INSIGHTS</span><h2 id="analytics-title">Incident analytics</h2><p>Track incident volume, workload, and resolution performance.</p></div>
+              <div class="analytics-controls"><label for="analytics-window">Period</label><select id="analytics-window"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select><button class="button button-quiet" id="refresh-analytics" type="button">Refresh</button></div>
+            </div>
+            <p id="analytics-message" class="analytics-message" role="status"></p>
+            <div class="analytics-kpis" id="analytics-kpis" aria-live="polite"><div class="analytics-loading">Loading incident metrics…</div></div>
+            <div class="analytics-charts">
+              <section class="analytics-card trend-card" aria-labelledby="trend-title"><div class="analytics-card-heading"><div><h3 id="trend-title">New incidents</h3><p>Reported each day in the selected period</p></div><span id="analytics-window-total" class="analytics-total"></span></div><div id="analytics-trend" class="analytics-chart" aria-live="polite"></div></section>
+              <section class="analytics-card" aria-labelledby="severity-title"><div class="analytics-card-heading"><div><h3 id="severity-title">Severity mix</h3><p>Incidents reported in this period</p></div></div><div id="analytics-severity" class="analytics-breakdown"></div></section>
+              <section class="analytics-card" aria-labelledby="services-title"><div class="analytics-card-heading"><div><h3 id="services-title">Most affected services</h3><p>By incident reports in this period</p></div></div><div id="analytics-services" class="analytics-breakdown"></div></section>
+            </div>
+            <p class="analytics-note">Resolution time is measured from incident creation to each recorded resolution. Active workload includes all currently open and investigating incidents.</p>
+          </section>
+
           <section id="incident" class="incident-area hidden" aria-live="polite"></section>
-          <section class="how-it-works" id="how-it-works"><div class="section-heading"><div><span class="eyebrow">THE PROOF PATCH FLOW</span><h2>Every recommendation has a receipt.</h2></div><span class="section-note">Evidence first. People decide. Checks prove.</span></div><div class="flow-cards"><article><span class="flow-number">01</span><span class="flow-icon icon-alert">⌁</span><h3>Collect signals</h3><p>Bring health, application log, and recent-change evidence into one incident.</p></article><article><span class="flow-number">02</span><span class="flow-icon icon-analyze">✳</span><h3>Explain the cause</h3><p>Deterministic triage shows the likely mismatch and which evidence supports it.</p></article><article><span class="flow-number">03</span><span class="flow-icon icon-review">✓</span><h3>Review the fix</h3><p>A person records approval or rejection before verification can proceed.</p></article><article><span class="flow-number">04</span><span class="flow-icon icon-verify">⌁</span><h3>Verify and report</h3><p>Fixed sandbox checks record pass or fail and create a timeline report.</p></article></div></section>
-          <footer><span class="footer-mark">P</span><span>ProofPatch <span class="footer-sep">·</span> Evidence-first incident response</span></footer>
+
+          <section class="how-it-works" id="how-it-works">
+            <div class="section-heading"><div><span class="eyebrow">THE PROOFPATCH WORKFLOW</span><h2>Every recommendation has a receipt.</h2></div><span class="section-note">Evidence first. People decide. Checks are recorded.</span></div>
+            <div class="flow-cards">
+              <article class="glass-panel"><span class="flow-number">01</span><span class="flow-icon icon-alert" aria-hidden="true">⌁</span><h3>Correlate alerts</h3><p>Related monitoring alerts are grouped by service, with every signal kept as evidence.</p></article>
+              <article class="glass-panel"><span class="flow-number">02</span><span class="flow-icon icon-analyze" aria-hidden="true">✳</span><h3>Explain the cause</h3><p>See the likely mismatch and the evidence that supports the finding.</p></article>
+              <article class="glass-panel"><span class="flow-number">03</span><span class="flow-icon icon-review" aria-hidden="true">✓</span><h3>Review the proposal</h3><p>A person records approval or rejection before verification can proceed.</p></article>
+              <article class="glass-panel"><span class="flow-number">04</span><span class="flow-icon icon-verify" aria-hidden="true">↗</span><h3>Verify and share</h3><p>Record a check and export a readable incident report for handoff.</p></article>
+            </div>
+          </section>
+
+          <footer><span class="footer-mark">P</span><span><strong>ProofPatch</strong><span class="footer-sep">·</span>Evidence-first incident response</span><a href="#top">Back to top ↑</a></footer>
         </div>
       </main>
     </div>
