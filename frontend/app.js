@@ -357,13 +357,13 @@ function renderAnalytics() {
     ? '—'
     : formatDuration(data.mean_resolution_hours);
   const metrics = [
-    ['↗', data.created_count, `New in ${data.window_days} days`, ''],
-    ['◉', data.active_count, 'Active now', 'is-amber'],
-    ['✓', data.resolved_count, 'Resolutions in period', 'is-green'],
-    ['◷', meanTime, 'Mean time to resolve', 'is-blue'],
+    ['<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/>', data.created_count, `New in ${data.window_days} days`, 'is-indigo'],
+    ['<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>', data.active_count, 'Active now', 'is-amber'],
+    ['<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', data.resolved_count, 'Resolutions in period', 'is-green'],
+    ['<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', meanTime, 'Mean time to resolve', 'is-blue'],
   ];
   document.querySelector('#analytics-kpis').innerHTML = metrics.map(([icon, value, label, tone]) => `
-    <article class="analytics-kpi"><span class="analytics-kpi-icon ${tone}">${icon}</span><div><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></div></article>`).join('');
+    <article class="analytics-kpi ${tone}"><span class="analytics-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></span><div><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></div></article>`).join('');
 
   const points = data.daily_incidents || [];
   const maxCount = Math.max(1, ...points.map((point) => point.count));
@@ -871,10 +871,10 @@ function incidentMetricsMarkup() {
       ? 'Recheck required'
       : latestVerification.status === 'passed' ? 'Passed' : 'Failed';
   return `<div class="incident-metrics">
-    <div class="metric-card"><span class="metric-icon metric-icon-evidence">E</span><div><strong>${state.evidence.length}</strong><span>Evidence items</span></div></div>
-    <div class="metric-card"><span class="metric-icon metric-icon-analysis">✦</span><div><strong>${escapeHtml(confidence)}</strong><span>Analysis confidence</span></div></div>
-    <div class="metric-card"><span class="metric-icon metric-icon-review">✓</span><div><strong>${state.approvals.length ? 'Recorded' : 'Waiting'}</strong><span>Human review</span></div></div>
-    <div class="metric-card"><span class="metric-icon metric-icon-check">↗</span><div><strong>${verification}</strong><span>Verification</span></div></div>
+    <div class="metric-card"><span class="metric-icon metric-icon-evidence" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg></span><div><strong>${state.evidence.length}</strong><span>Evidence items</span></div></div>
+    <div class="metric-card"><span class="metric-icon metric-icon-analysis" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="M5 3v4M3 5h4m14 11v5m-2.5-2.5h5"/></svg></span><div><strong>${escapeHtml(confidence)}</strong><span>Analysis confidence</span></div></div>
+    <div class="metric-card"><span class="metric-icon metric-icon-review" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="5"/><path d="M1 21a8 8 0 0 1 14.8-4.2M16 19l2 2 4-4"/></svg></span><div><strong>${state.approvals.length ? 'Recorded' : 'Waiting'}</strong><span>Human review</span></div></div>
+    <div class="metric-card"><span class="metric-icon metric-icon-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></span><div><strong>${verification}</strong><span>Verification</span></div></div>
   </div>`;
 }
 
