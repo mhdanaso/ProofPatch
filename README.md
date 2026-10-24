@@ -181,7 +181,7 @@ not asserted to be the cause. Each GitHub delivery is processed once.
 
 The SQLite database stores received change events and their incident links. On
 Render, use a persistent disk and set `PROOFPATCH_DB_PATH` to a file on that disk
-if this history should survive service restarts.
+if this history should survive service restarts..
 
 ### Collect incident evidence
 
